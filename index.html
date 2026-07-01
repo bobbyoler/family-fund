@@ -1463,10 +1463,10 @@ function txRowHTML(t){
   return`<tr data-id="${t.id}" style="${sel?'background:#eff6ff':''}">
     <td style="padding:2px 4px"><input type="checkbox" class="sel-cb-tx" data-id="${t.id}" onchange="toggleSel('tx','${t.id}')" ${sel?'checked':''} style="width:14px;height:14px"></td>
     <td style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.date||'')}" data-field="date" placeholder="Day" onblur="saveTxRow('${t.id}')" style="text-align:center"></td>
-    <td class="tx-tap" style="padding:1px 2px" onclick="openEditTx('${t.id}')"><input class="sp-input" value="${escHtml(t.desc||'')}" data-field="desc" placeholder="Description" onblur="saveTxRow('${t.id}')"></td>
+    <td class="tx-tap" style="padding:1px 2px" onclick="if(window.innerWidth<=600)openEditTx('${t.id}')"><input class="sp-input" value="${escHtml(t.desc||'')}" data-field="desc" placeholder="Description" onblur="saveTxRow('${t.id}')"></td>
     <td class="col-hide-sm" style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.cat||'')}" data-field="cat" list="sp-cats" placeholder="Category" onblur="saveTxRow('${t.id}')"></td>
     <td class="col-hide-sm" style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.pay||'')}" data-field="pay" list="sp-pay" placeholder="Payment" onblur="saveTxRow('${t.id}')"></td>
-    <td class="tx-tap" style="padding:1px 2px" onclick="openEditTx('${t.id}')"><input class="sp-input sp-num" value="${t.amt||''}" data-field="amt" inputmode="decimal" data-math="1" placeholder="0.00" onblur="saveTxRow('${t.id}')" onkeydown="spTabTx(event,'${t.id}')"></td>
+    <td class="tx-tap" style="padding:1px 2px" onclick="if(window.innerWidth<=600)openEditTx('${t.id}')"><input class="sp-input sp-num" value="${t.amt||''}" data-field="amt" inputmode="decimal" data-math="1" placeholder="0.00" onblur="saveTxRow('${t.id}')" onkeydown="spTabTx(event,'${t.id}')"></td>
     <td style="padding:1px 2px;text-align:center"><button class="sp-del" onclick="deleteTx('${t.id}')" tabindex="-1">×</button></td>
   </tr>`;
 }
@@ -1515,6 +1515,7 @@ function addTxRow(){
   tmp.innerHTML=txRowHTML({id:newId,date:'',desc:'',cat:'',pay:'',amt:0});
   const newRow=tmp.firstElementChild;
   tbody.appendChild(newRow);
+  if(window.innerWidth<=600){openEditTx(newId);return;}
   const inp=newRow.querySelector('[data-field="desc"]');if(inp)inp.focus();
 }
 function addIncRow(){
@@ -1530,6 +1531,7 @@ function addIncRow(){
   // insert before tr-total
   const total=tbody.querySelector('.tr-total');
   if(total)tbody.insertBefore(newRow,total);else tbody.appendChild(newRow);
+  if(window.innerWidth<=600){openEditInc(newId);return;}
   const inp=newRow.querySelector('[data-field="desc"]');if(inp)inp.focus();
 }
 function spTabTx(e,id){
