@@ -1031,7 +1031,7 @@ function renderDashboard(){
   const ytdC={};
   for(const m of hm){if(!STATE.months[m])continue;const ct=catTotals(STATE.months[m].tx);for(const[c,v]of Object.entries(ct))ytdC[c]=(ytdC[c]||0)+v;}
   const top=Object.entries(ytdC).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const nwE=Object.entries(STATE.netWorthTracker).filter(([,v])=>v>0);
+  const nwE=MONTHS.filter(m=>STATE.netWorthTracker[m]>0).map(m=>[m,STATE.netWorthTracker[m]]);
   const sortedCats=Object.entries(ytdC).sort((a,b)=>b[1]-a[1]).map(([c])=>c);
   const topCats=sortedCats.slice(0,12);
   const otherCats=sortedCats.slice(12);
@@ -1336,7 +1336,7 @@ function renderAssets(){
   const totalA=Object.values(STATE.assets).reduce((s,v)=>s+v,0);
   const totalD=Object.values(STATE.balances).reduce((s,v)=>s+v,0);
   const nw=totalA-totalD,gcT=STATE.giftCards.reduce((s,g)=>s+g.bal,0),sfT=STATE.savingFunds.reduce((s,f)=>s+f.amount,0);
-  const nwArr=Object.entries(STATE.netWorthTracker).filter(([,v])=>v>0);
+  const nwArr=MONTHS.filter(m=>STATE.netWorthTracker[m]>0).map(m=>[m,STATE.netWorthTracker[m]]);
   el.innerHTML=`
 <div class="grid-4" style="margin-bottom:16px">
   <div class="stat-card"><div class="stat-label">Net Worth</div><div class="stat-value text-blue">${fmt(nw)}</div></div>
