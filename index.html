@@ -78,12 +78,14 @@ tr:hover td{background:#fafafa}
 .sp-num{text-align:right;}
 .sp-del{opacity:0;border:none;background:none;color:var(--red);cursor:pointer;font-size:15px;font-weight:700;padding:0 3px;line-height:1;transition:.1s;}
 tr:hover .sp-del{opacity:.6;} tr:hover .sp-del:hover{opacity:1;}
+.col-show-sm{display:none}
 @media(max-width:900px){.month-cols{grid-template-columns:1fr}.grid-4{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}}
 @media(max-width:600px){
   #app-header{padding:0 10px;gap:6px;height:46px}
   #app-header h1{display:none}
   #user-email{display:none!important}
   .col-hide-sm{display:none}
+  .col-show-sm{display:table-cell}
   .nav-tab{padding:5px 9px;font-size:12px}
   #main{padding:10px}
   .card{padding:12px}
@@ -1181,6 +1183,7 @@ function renderMonth(){
           <th class="col-hide-sm" style="width:126px;cursor:pointer;user-select:none" onclick="setTxSort('cat')">Category${sortIco('tx','cat')}</th>
           <th class="col-hide-sm" style="width:108px;cursor:pointer;user-select:none" onclick="setTxSort('pay')">Payment${sortIco('tx','pay')}</th>
           <th style="width:82px;text-align:right;cursor:pointer;user-select:none" onclick="setTxSort('amt')">Amount${sortIco('tx','amt')}</th>
+          <th class="col-show-sm" style="width:28px"></th>
           <th style="width:20px"></th>
         </tr></thead>
         <tbody>${sortArr(md.tx,txSort.col,txSort.dir).map(t=>txRowHTML(t)).join('')}</tbody>
@@ -1465,6 +1468,7 @@ function txRowHTML(t){
     <td class="col-hide-sm" style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.cat||'')}" data-field="cat" list="sp-cats" placeholder="Category" onblur="saveTxRow('${t.id}')"></td>
     <td class="col-hide-sm" style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.pay||'')}" data-field="pay" list="sp-pay" placeholder="Payment" onblur="saveTxRow('${t.id}')"></td>
     <td style="padding:1px 2px"><input class="sp-input sp-num" value="${t.amt||''}" data-field="amt" inputmode="decimal" data-math="1" placeholder="0.00" onblur="saveTxRow('${t.id}')" onkeydown="spTabTx(event,'${t.id}')"></td>
+    <td class="col-show-sm" style="padding:1px 2px;text-align:center"><button class="sp-del" onclick="openEditTx('${t.id}')" tabindex="-1" title="Edit">✎</button></td>
     <td style="padding:1px 2px;text-align:center"><button class="sp-del" onclick="deleteTx('${t.id}')" tabindex="-1">×</button></td>
   </tr>`;
 }
