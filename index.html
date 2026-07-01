@@ -1406,7 +1406,7 @@ function txForm(t){
     </div>
   </div>
   <div class="form-group"><label>Payment</label><select id="m-pay">${PAY_TYPES.map(p=>`<option${t&&p===t.pay?' selected':''}>${p}</option>`).join('')}</select></div>
-  <div class="form-group"><label>Amount</label><input id="m-amt" type="text" inputmode="decimal" data-math="1" value="${t?t.amt:''}"></div>`;}
+  <div class="form-group"><label>Amount</label><input id="m-amt" type="text" inputmode="decimal" data-math="1" value="${t&&t.amt?t.amt:''}"></div>`;}
 function toggleNewCat(v){const w=document.getElementById('m-newcat-wrap');if(w)w.style.display=v===NEW_CAT_SENTINEL?'block':'none';}
 function openAddTx(){openModal(`<h2>Add Transaction — ${currentMonth}</h2>${txForm(null)}<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTx(null)">Add</button></div>`);}
 function openEditTx(id){const t=STATE.months[currentMonth].tx.find(x=>x.id===id);if(!t)return;openModal(`<h2>Edit Transaction</h2>${txForm(t)}<div class="modal-actions" style="justify-content:space-between"><button class="btn btn-ghost" style="color:var(--red)" onclick="deleteTx('${id}')">Delete</button><div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTx('${id}')">Save</button></div></div>`);}
@@ -1439,7 +1439,7 @@ function incForm(i){
       <div style="font-size:11px;color:var(--muted);margin-top:3px">Will be added to your income category list.</div>
     </div>
   </div>
-  <div class="form-group"><label>Amount</label><input id="i-amt" type="text" inputmode="decimal" data-math="1" value="${i?i.amt:''}"></div>`;}
+  <div class="form-group"><label>Amount</label><input id="i-amt" type="text" inputmode="decimal" data-math="1" value="${i&&i.amt?i.amt:''}"></div>`;}
 function toggleNewIncCat(v){const w=document.getElementById('i-newcat-wrap');if(w)w.style.display=v===NEW_INC_CAT_SENTINEL?'block':'none';}
 function openAddInc(){openModal(`<h2>Add Income — ${currentMonth}</h2>${incForm(null)}<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveInc(null)">Add</button></div>`);}
 function openEditInc(id){const item=STATE.months[currentMonth].inc.find(x=>x.id===id);if(!item)return;openModal(`<h2>Edit Income</h2>${incForm(item)}<div class="modal-actions" style="justify-content:space-between"><button class="btn btn-ghost" style="color:var(--red)" onclick="deleteInc('${id}')">Delete</button><div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveInc('${id}')">Save</button></div></div>`);}
