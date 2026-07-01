@@ -1772,16 +1772,23 @@ _auth.onAuthStateChanged(async user=>{
     overlay.style.display='none';
     loading.style.display='flex';
     // Load initial data
+    let isFirstTime=false;
     try{
       const snap=await _DOC.get();
-      STATE=snap.exists?snap.data():_seedState();
+      if(snap.exists){
+        STATE=snap.data();
+      }else{
+        STATE=_seedState();
+        isFirstTime=true;
+      }
     }catch(e){
-      console.error('Load error:',e);
+      console.error('Load error — check Firestore rules:',e);
       STATE=_seedState();
+      isFirstTime=true;
     }
     _applyMigrations();
-    // First-time: persist seed data to Firestore
-    if(!(await _DOC.get()).exists)await _DOC.set(JSON.parse(JSON.stringify(STATE)));
+    // First-time: persist seed data to Firestore (only attempt if read succeeded)
+    if(isFirstTime){try{await _DOC.set(JSON.parse(JSON.stringify(STATE)));}catch(e){console.error('Initial save failed:',e);}}
     // Show app
     loading.style.display='none';
     header.style.display='flex';
