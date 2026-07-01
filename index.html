@@ -1725,7 +1725,7 @@ function addNetWorthEntry(){const cur=netWorth();openModal(`<h2>Record Net Worth
 function saveNWEntry(){const m=document.getElementById('nw-month').value,v=parseFloat(document.getElementById('nw-val').value)||0;STATE.netWorthTracker[m]=v;saveState();closeModal();renderAssets();}
 function deleteNWEntry(m){if(!confirm('Delete?'))return;delete STATE.netWorthTracker[m];saveState();renderAssets();}
 // ── Auth helpers ──────────────────────────────────────────────
-const ALLOWED_EMAILS=['bobby.oler@gmail.com','molly.oler@gmail.com'];
+const ALLOWED_EMAILS=['bobby.oler@gmail.com','molly.jirasek@gmail.com'];
 async function signInWithGoogle(){
   const errEl=document.getElementById('auth-error');
   const btn=document.getElementById('google-btn');
