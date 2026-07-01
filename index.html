@@ -80,8 +80,10 @@ tr:hover td{background:#fafafa}
 tr:hover .sp-del{opacity:.6;} tr:hover .sp-del:hover{opacity:1;}
 @media(max-width:900px){.month-cols{grid-template-columns:1fr}.grid-4{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}}
 @media(max-width:600px){
-  #app-header{padding:0 10px;gap:8px;height:46px}
-  #app-header h1{font-size:13px;white-space:nowrap}
+  #app-header{padding:0 10px;gap:6px;height:46px}
+  #app-header h1{display:none}
+  #user-email{display:none!important}
+  .col-hide-sm{display:none}
   .nav-tab{padding:5px 9px;font-size:12px}
   #main{padding:10px}
   .card{padding:12px}
@@ -531,7 +533,7 @@ document.addEventListener('focusout',function(e){
     if(r!==v&&r!=='')e.target.value=r;
   }
 });
-let STATE={},currentMonth='June',currentView='dashboard';
+let STATE={},currentMonth=new Date().toLocaleString('en-US',{month:'long'}),currentView='dashboard';
 function _applyMigrations(){
   if(!STATE.customCategories)STATE.customCategories=[];
   if(!STATE.customIncCategories)STATE.customIncCategories=[];
@@ -1176,8 +1178,8 @@ function renderMonth(){
           <th style="width:22px"><input type="checkbox" id="sel-all-tx" onchange="toggleSelAll('tx',this)" style="width:14px;height:14px"></th>
           <th style="width:38px;cursor:pointer;user-select:none" onclick="setTxSort('date')">Day${sortIco('tx','date')}</th>
           <th style="cursor:pointer;user-select:none" onclick="setTxSort('desc')">Description${sortIco('tx','desc')}</th>
-          <th style="width:126px;cursor:pointer;user-select:none" onclick="setTxSort('cat')">Category${sortIco('tx','cat')}</th>
-          <th style="width:108px;cursor:pointer;user-select:none" onclick="setTxSort('pay')">Payment${sortIco('tx','pay')}</th>
+          <th class="col-hide-sm" style="width:126px;cursor:pointer;user-select:none" onclick="setTxSort('cat')">Category${sortIco('tx','cat')}</th>
+          <th class="col-hide-sm" style="width:108px;cursor:pointer;user-select:none" onclick="setTxSort('pay')">Payment${sortIco('tx','pay')}</th>
           <th style="width:82px;text-align:right;cursor:pointer;user-select:none" onclick="setTxSort('amt')">Amount${sortIco('tx','amt')}</th>
           <th style="width:20px"></th>
         </tr></thead>
@@ -1460,8 +1462,8 @@ function txRowHTML(t){
     <td style="padding:2px 4px"><input type="checkbox" class="sel-cb-tx" data-id="${t.id}" onchange="toggleSel('tx','${t.id}')" ${sel?'checked':''} style="width:14px;height:14px"></td>
     <td style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.date||'')}" data-field="date" placeholder="Day" onblur="saveTxRow('${t.id}')" style="text-align:center"></td>
     <td style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.desc||'')}" data-field="desc" placeholder="Description" onblur="saveTxRow('${t.id}')"></td>
-    <td style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.cat||'')}" data-field="cat" list="sp-cats" placeholder="Category" onblur="saveTxRow('${t.id}')"></td>
-    <td style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.pay||'')}" data-field="pay" list="sp-pay" placeholder="Payment" onblur="saveTxRow('${t.id}')"></td>
+    <td class="col-hide-sm" style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.cat||'')}" data-field="cat" list="sp-cats" placeholder="Category" onblur="saveTxRow('${t.id}')"></td>
+    <td class="col-hide-sm" style="padding:1px 2px"><input class="sp-input" value="${escHtml(t.pay||'')}" data-field="pay" list="sp-pay" placeholder="Payment" onblur="saveTxRow('${t.id}')"></td>
     <td style="padding:1px 2px"><input class="sp-input sp-num" value="${t.amt||''}" data-field="amt" inputmode="decimal" data-math="1" placeholder="0.00" onblur="saveTxRow('${t.id}')" onkeydown="spTabTx(event,'${t.id}')"></td>
     <td style="padding:1px 2px;text-align:center"><button class="sp-del" onclick="deleteTx('${t.id}')" tabindex="-1">×</button></td>
   </tr>`;
