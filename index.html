@@ -86,6 +86,7 @@ tr:hover .sp-del{opacity:.6;} tr:hover .sp-del:hover{opacity:1;}
   #user-email{display:none!important}
   .col-hide-sm{display:none}
   .col-show-sm{display:table-cell}
+  .col-show-sm .sp-del{opacity:1}
   .nav-tab{padding:5px 9px;font-size:12px}
   #main{padding:10px}
   .card{padding:12px}
@@ -1562,7 +1563,7 @@ function updateMonthSummaryBar(){
   if(cards[2]){cards[2].textContent=fmt(net);cards[2].className=`ms-val ${net>=0?'text-green':'text-red'}`;}
   if(cards[3]){cards[3].innerHTML=`${fmt(remaining)}<span style="font-size:11px;color:var(--muted)"> after goals</span>`;cards[3].className=`ms-val ${remaining>=0?'text-green':'text-red'}`;}
   // also update income total row
-  const totRow=document.querySelector('.inc-table .tr-total td:nth-child(4)');
+  const totRow=document.querySelector('.inc-table .tr-total td:nth-child(3)');
   if(totRow)totRow.textContent=fmt(earned);
 }
 // ── End Spreadsheet ───────────────────────────────────────────────────────────
