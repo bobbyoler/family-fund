@@ -1490,7 +1490,7 @@ function saveTxRow(id){
   t.desc=(row.querySelector('[data-field="desc"]')||{}).value||'';
   t.cat=(row.querySelector('[data-field="cat"]')||{}).value||'';
   t.pay=(row.querySelector('[data-field="pay"]')||{}).value||'';
-  const rawAmt=(row.querySelector('[data-field="amt"]')||{}).value||'';
+  const rawAmt=((row.querySelector('[data-field="amt"]')||{}).value||'').replace(/[$,]/g,'');
   const ev=evalMath(rawAmt);t.amt=parseFloat(ev)||0;
   if(t.cat&&!getAllCats().includes(t.cat)&&!STATE.customCategories.includes(t.cat))STATE.customCategories.push(t.cat);
   saveState();updateMonthSummaryBar();deferredRender();
@@ -1501,7 +1501,7 @@ function saveIncRow(id){
   const i=md.inc.find(x=>x.id===id);if(!i)return;
   i.desc=(row.querySelector('[data-field="desc"]')||{}).value||'';
   i.cat=(row.querySelector('[data-field="cat"]')||{}).value||'';
-  const rawAmt=(row.querySelector('[data-field="amt"]')||{}).value||'';
+  const rawAmt=((row.querySelector('[data-field="amt"]')||{}).value||'').replace(/[$,]/g,'');
   const ev=evalMath(rawAmt);i.amt=parseFloat(ev)||0;
   if(i.cat&&!getAllIncCats().includes(i.cat)&&!STATE.customIncCategories.includes(i.cat))STATE.customIncCategories.push(i.cat);
   saveState();updateMonthSummaryBar();deferredRender();
