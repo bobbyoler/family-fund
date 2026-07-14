@@ -545,6 +545,11 @@ function _applyMigrations(){
     if(md.savingGoals)md.savingGoals.forEach(g=>{if(!g.id)g.id=uid();});
     if(md.savingsUsed)md.savingsUsed.forEach(u=>{if(!u.id)u.id=uid();});
   }
+  if(!STATE.assetMeta)STATE.assetMeta={assets:{},balances:{},funds:{},giftCards:{}};
+  if(!STATE.assetMeta.assets)STATE.assetMeta.assets={};
+  if(!STATE.assetMeta.balances)STATE.assetMeta.balances={};
+  if(!STATE.assetMeta.funds)STATE.assetMeta.funds={};
+  if(!STATE.assetMeta.giftCards)STATE.assetMeta.giftCards={};
 }
 let SEL={tx:new Set(),inc:new Set(),su:new Set(),goals:new Set()};
 let TSEL={tx:new Set(),inc:new Set(),goals:new Set()};
@@ -676,6 +681,7 @@ function incCatsSortedByUse(){
 }
 const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtS=n=>(n<0?'-':'')+fmt(n);
+function fmtLastEdited(iso){if(!iso)return'';const d=new Date(iso),now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());const dd=new Date(d.getFullYear(),d.getMonth(),d.getDate());const diff=Math.round((today-dd)/864e5);if(diff===0)return'Today';if(diff===1)return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:d.getFullYear()!==now.getFullYear()?'numeric':undefined});}
 function fmtAmtInput(inp){const v=parseFloat(inp.value.replace(/[$,]/g,''));inp.value=v?fmt(v):'';}
 function rawAmtInput(inp){inp.value=inp.value.replace(/[$,]/g,'');}
 const sumTx=a=>a.reduce((s,t)=>s+(t.amt||0),0);
@@ -1356,13 +1362,13 @@ function renderAssets(){
   <div class="card">
     <div class="card-header"><span class="card-title">Assets</span><button class="btn btn-sm btn-ghost" onclick="openAddAsset()">+ Add</button></div>
     <table><thead><tr><th>Account</th><th style="text-align:right">Balance</th><th></th></tr></thead>
-    <tbody>${Object.entries(STATE.assets).map(([k,v])=>`<tr><td style="font-weight:500">${k}</td><td style="text-align:right;font-weight:600;color:var(--green)"><span class="editable" onclick="editAsset('${k}')">${fmt(v)}</span></td><td><button class="icon-btn del" onclick="deleteAsset('${k}')">&#x1F5D1;</button></td></tr>`).join('')}
+    <tbody>${Object.entries(STATE.assets).map(([k,v])=>{const le=fmtLastEdited(STATE.assetMeta?.assets?.[k]);return`<tr><td style="font-weight:500">${k}${le?`<div style="font-size:11px;color:var(--muted);font-weight:400">${le}</div>`:''}</td><td style="text-align:right;font-weight:600;color:var(--green)"><span class="editable" onclick="editAsset('${k}')">${fmt(v)}</span></td><td><button class="icon-btn del" onclick="deleteAsset('${k}')">&#x1F5D1;</button></td></tr>`;}).join('')}
     <tr class="tr-total"><td>Total</td><td style="text-align:right;color:var(--green)">${fmt(totalA)}</td><td></td></tr></tbody></table>
   </div>
   <div class="card">
     <div class="card-header"><span class="card-title">Outstanding Balances</span><button class="btn btn-sm btn-ghost" onclick="openAddBalance()">+ Add</button></div>
     <table><thead><tr><th>Account</th><th style="text-align:right">Balance</th><th></th></tr></thead>
-    <tbody>${Object.entries(STATE.balances).map(([k,v])=>`<tr><td style="font-weight:500">${k}</td><td style="text-align:right;font-weight:600;color:var(--red)"><span class="editable" onclick="editBalance('${k}')">${fmt(v)}</span></td><td><button class="icon-btn del" onclick="deleteBalance('${k}')">&#x1F5D1;</button></td></tr>`).join('')}
+    <tbody>${Object.entries(STATE.balances).map(([k,v])=>{const le=fmtLastEdited(STATE.assetMeta?.balances?.[k]);return`<tr><td style="font-weight:500">${k}${le?`<div style="font-size:11px;color:var(--muted);font-weight:400">${le}</div>`:''}</td><td style="text-align:right;font-weight:600;color:var(--red)"><span class="editable" onclick="editBalance('${k}')">${fmt(v)}</span></td><td><button class="icon-btn del" onclick="deleteBalance('${k}')">&#x1F5D1;</button></td></tr>`;}).join('')}
     <tr class="tr-total"><td>Total</td><td style="text-align:right;color:var(--red)">${fmt(totalD)}</td><td></td></tr></tbody></table>
   </div>
 </div>
@@ -1370,13 +1376,13 @@ function renderAssets(){
   <div class="card">
     <div class="card-header"><span class="card-title">Saving Funds</span><button class="btn btn-sm btn-ghost" onclick="openAddFund()">+ Add</button></div>
     <table><thead><tr><th>Fund</th><th>Notes</th><th style="text-align:right">Amount</th><th></th></tr></thead>
-    <tbody>${STATE.savingFunds.map((f,i)=>`<tr><td style="font-weight:500">${f.name}</td><td style="color:var(--muted);font-size:12px">${f.notes}</td><td style="text-align:right;font-weight:600;color:var(--blue)"><span class="editable" onclick="editFund(${i})">${fmt(f.amount)}</span></td><td><button class="icon-btn del" onclick="deleteFund(${i})">&#x1F5D1;</button></td></tr>`).join('')}
+    <tbody>${STATE.savingFunds.map((f,i)=>{const le=fmtLastEdited(STATE.assetMeta?.funds?.[f.name]);return`<tr><td style="font-weight:500">${f.name}${le?`<div style="font-size:11px;color:var(--muted);font-weight:400">${le}</div>`:''}</td><td style="color:var(--muted);font-size:12px">${f.notes}</td><td style="text-align:right;font-weight:600;color:var(--blue)"><span class="editable" onclick="editFund(${i})">${fmt(f.amount)}</span></td><td><button class="icon-btn del" onclick="deleteFund(${i})">&#x1F5D1;</button></td></tr>`;}).join('')}
     <tr class="tr-total"><td colspan="2">Total</td><td style="text-align:right;color:var(--blue)">${fmt(sfT)}</td><td></td></tr></tbody></table>
   </div>
   <div class="card">
     <div class="card-header"><span class="card-title">Gift Cards</span><button class="btn btn-sm btn-ghost" onclick="openAddGiftCard()">+ Add</button></div>
     <table><thead><tr><th>Store</th><th>Notes</th><th style="text-align:right">Balance</th><th></th></tr></thead>
-    <tbody>${STATE.giftCards.map((g,i)=>`<tr><td style="font-weight:500">${g.store}</td><td style="color:var(--muted);font-size:12px">${g.notes}</td><td style="text-align:right;font-weight:600;color:var(--amber)"><span class="editable" onclick="editGiftCard(${i})">${fmt(g.bal)}</span></td><td><button class="icon-btn del" onclick="deleteGiftCard(${i})">&#x1F5D1;</button></td></tr>`).join('')}
+    <tbody>${STATE.giftCards.map((g,i)=>{const le=fmtLastEdited(STATE.assetMeta?.giftCards?.[g.store]);return`<tr><td style="font-weight:500">${g.store}${le?`<div style="font-size:11px;color:var(--muted);font-weight:400">${le}</div>`:''}</td><td style="color:var(--muted);font-size:12px">${g.notes}</td><td style="text-align:right;font-weight:600;color:var(--amber)"><span class="editable" onclick="editGiftCard(${i})">${fmt(g.bal)}</span></td><td><button class="icon-btn del" onclick="deleteGiftCard(${i})">&#x1F5D1;</button></td></tr>`;}).join('')}
     <tr class="tr-total"><td colspan="2">Total</td><td style="text-align:right;color:var(--amber)">${fmt(gcT)}</td><td></td></tr></tbody></table>
   </div>
 </div>
@@ -1717,19 +1723,19 @@ function deleteSavingsUsed(i){
 }
 function openAddAsset(){openModal(`<h2>Add Asset</h2><div class="form-group"><label>Name</label><input id="a-name" type="text"></div><div class="form-group"><label>Balance</label><input id="a-val" type="text" inputmode="decimal" data-math="1"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAsset(null)">Add</button></div>`);}
 function editAsset(k){openModal(`<h2>Edit Asset</h2><div class="form-group"><label>Name</label><input id="a-name" type="text" value="${k}" readonly style="background:#f8fafc"></div><div class="form-group"><label>Balance</label><input id="a-val" type="text" inputmode="decimal" data-math="1" value="${STATE.assets[k]}"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAsset('${k}')">Save</button></div>`);}
-function saveAsset(k){const name=document.getElementById('a-name').value.trim(),val=parseFloat(document.getElementById('a-val').value)||0;if(k)STATE.assets[k]=val;else if(name)STATE.assets[name]=val;saveState();closeModal();renderAssets();}
+function saveAsset(k){const name=document.getElementById('a-name').value.trim(),val=parseFloat(document.getElementById('a-val').value)||0;if(k)STATE.assets[k]=val;else if(name)STATE.assets[name]=val;const key=k||name;if(key)STATE.assetMeta.assets[key]=new Date().toISOString();saveState();closeModal();renderAssets();}
 function deleteAsset(k){if(!confirm('Delete?'))return;delete STATE.assets[k];saveState();renderAssets();}
 function openAddBalance(){openModal(`<h2>Add Balance</h2><div class="form-group"><label>Account</label><input id="b-name" type="text"></div><div class="form-group"><label>Balance Owed</label><input id="b-val" type="text" inputmode="decimal" data-math="1"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBalance(null)">Add</button></div>`);}
 function editBalance(k){openModal(`<h2>Edit Balance</h2><div class="form-group"><label>Account</label><input id="b-name" type="text" value="${k}" readonly style="background:#f8fafc"></div><div class="form-group"><label>Balance Owed</label><input id="b-val" type="text" inputmode="decimal" data-math="1" value="${STATE.balances[k]}"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBalance('${k}')">Save</button></div>`);}
-function saveBalance(k){const name=document.getElementById('b-name').value.trim(),val=parseFloat(document.getElementById('b-val').value)||0;if(k)STATE.balances[k]=val;else if(name)STATE.balances[name]=val;saveState();closeModal();renderAssets();}
+function saveBalance(k){const name=document.getElementById('b-name').value.trim(),val=parseFloat(document.getElementById('b-val').value)||0;if(k)STATE.balances[k]=val;else if(name)STATE.balances[name]=val;const key=k||name;if(key)STATE.assetMeta.balances[key]=new Date().toISOString();saveState();closeModal();renderAssets();}
 function deleteBalance(k){if(!confirm('Delete?'))return;delete STATE.balances[k];saveState();renderAssets();}
 function openAddFund(){openModal(`<h2>Add Saving Fund</h2><div class="form-group"><label>Name</label><input id="f-name" type="text"></div><div class="form-group"><label>Amount</label><input id="f-val" type="text" inputmode="decimal" data-math="1"></div><div class="form-group"><label>Notes</label><input id="f-notes" type="text"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveFund(-1)">Add</button></div>`);}
 function editFund(i){const f=STATE.savingFunds[i];openModal(`<h2>Edit Fund</h2><div class="form-group"><label>Name</label><input id="f-name" type="text" value="${f.name}"></div><div class="form-group"><label>Amount</label><input id="f-val" type="text" inputmode="decimal" data-math="1" value="${f.amount}"></div><div class="form-group"><label>Notes</label><input id="f-notes" type="text" value="${f.notes}"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveFund(${i})">Save</button></div>`);}
-function saveFund(i){const name=document.getElementById('f-name').value.trim(),amount=parseFloat(document.getElementById('f-val').value)||0,notes=document.getElementById('f-notes').value.trim();if(!name)return;if(i<0)STATE.savingFunds.push({name,amount,notes});else STATE.savingFunds[i]={name,amount,notes};saveState();closeModal();renderAssets();}
+function saveFund(i){const name=document.getElementById('f-name').value.trim(),amount=parseFloat(document.getElementById('f-val').value)||0,notes=document.getElementById('f-notes').value.trim();if(!name)return;if(i<0)STATE.savingFunds.push({name,amount,notes});else STATE.savingFunds[i]={name,amount,notes};STATE.assetMeta.funds[name]=new Date().toISOString();saveState();closeModal();renderAssets();}
 function deleteFund(i){if(!confirm('Delete?'))return;STATE.savingFunds.splice(i,1);saveState();renderAssets();}
 function openAddGiftCard(){openModal(`<h2>Add Gift Card</h2><div class="form-group"><label>Store</label><input id="gc-store" type="text"></div><div class="form-group"><label>Balance</label><input id="gc-bal" type="text" inputmode="decimal" data-math="1"></div><div class="form-group"><label>Notes</label><input id="gc-notes" type="text"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGiftCard(-1)">Add</button></div>`);}
 function editGiftCard(i){const g=STATE.giftCards[i];openModal(`<h2>Edit Gift Card</h2><div class="form-group"><label>Store</label><input id="gc-store" type="text" value="${g.store}"></div><div class="form-group"><label>Balance</label><input id="gc-bal" type="text" inputmode="decimal" data-math="1" value="${g.bal}"></div><div class="form-group"><label>Notes</label><input id="gc-notes" type="text" value="${g.notes}"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGiftCard(${i})">Save</button></div>`);}
-function saveGiftCard(i){const store=document.getElementById('gc-store').value.trim(),bal=parseFloat(document.getElementById('gc-bal').value)||0,notes=document.getElementById('gc-notes').value.trim();if(!store)return;if(i<0)STATE.giftCards.push({store,bal,notes});else STATE.giftCards[i]={store,bal,notes};saveState();closeModal();renderAssets();}
+function saveGiftCard(i){const store=document.getElementById('gc-store').value.trim(),bal=parseFloat(document.getElementById('gc-bal').value)||0,notes=document.getElementById('gc-notes').value.trim();if(!store)return;if(i<0)STATE.giftCards.push({store,bal,notes});else STATE.giftCards[i]={store,bal,notes};STATE.assetMeta.giftCards[store]=new Date().toISOString();saveState();closeModal();renderAssets();}
 function deleteGiftCard(i){if(!confirm('Delete?'))return;STATE.giftCards.splice(i,1);saveState();renderAssets();}
 function addNetWorthEntry(){const cur=netWorth();openModal(`<h2>Record Net Worth</h2><div class="form-group"><label>Month</label><select id="nw-month">${MONTHS.map(m=>`<option${m===currentMonth?' selected':''}>${m}</option>`).join('')}</select></div><div class="form-group"><label>Net Worth</label><input id="nw-val" type="text" inputmode="decimal" data-math="1" value="${cur.toFixed(2)}"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNWEntry()">Save</button></div>`);}
 function saveNWEntry(){const m=document.getElementById('nw-month').value,v=parseFloat(document.getElementById('nw-val').value)||0;STATE.netWorthTracker[m]=v;saveState();closeModal();renderAssets();}
@@ -1801,9 +1807,15 @@ async function importData(input){
 }
 
 // ── Handle redirect result (for signInWithRedirect flow) ──────
-_auth.getRedirectResult().catch(e=>{
+_auth.getRedirectResult().then(result=>{
+  if(!result||!result.user)return;
+  // onAuthStateChanged handles the rest
+}).catch(e=>{
   const errEl=document.getElementById('auth-error');
-  if(errEl){errEl.textContent='Google sign-in failed: '+e.message;errEl.style.display='block';}
+  if(errEl){
+    errEl.innerHTML='Google sign-in didn\'t complete — your browser may be blocking it.<br><span style="font-weight:500">Try signing in with email &amp; password below instead.</span>';
+    errEl.style.display='block';
+  }
   const btn=document.getElementById('google-btn');
   if(btn){btn.innerHTML=_GOOGLE_BTN_HTML;btn.disabled=false;}
 });
