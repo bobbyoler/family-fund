@@ -796,7 +796,10 @@ function renderTemplate(){
       <div style="display:flex;flex-direction:column;gap:8px">${budCards}</div>
     </div>
   </div>
-</div>`;
+</div>
+<datalist id="sp-cats">${getAllCats().map(c=>`<option value="${escHtml(c)}">`).join('')}</datalist>
+<datalist id="sp-pay">${PAY_TYPES.map(p=>`<option value="${escHtml(p)}">`).join('')}</datalist>
+<datalist id="sp-inc-cats">${getAllIncCats().map(c=>`<option value="${escHtml(c)}">`).join('')}</datalist>`;
 }
 function updateTemplateBudgets(){
   const T=STATE.template;
