@@ -545,6 +545,7 @@ function _applyMigrations(){
     if(md.savingGoals)md.savingGoals.forEach(g=>{if(!g.id)g.id=uid();});
     if(md.savingsUsed)md.savingsUsed.forEach(u=>{if(!u.id)u.id=uid();});
   }
+  if(!STATE.scratches)STATE.scratches=[];
   if(!STATE.assetMeta)STATE.assetMeta={assets:{},balances:{},funds:{},giftCards:{}};
   if(!STATE.assetMeta.assets)STATE.assetMeta.assets={};
   if(!STATE.assetMeta.balances)STATE.assetMeta.balances={};
@@ -553,7 +554,7 @@ function _applyMigrations(){
 }
 let SEL={tx:new Set(),inc:new Set(),su:new Set(),goals:new Set()};
 let TSEL={tx:new Set(),inc:new Set(),goals:new Set()};
-let currentSubView='month';
+let currentSubView='month',currentScratchId=null;
 const escHtml=s=>(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 let _spRenderTimer=null;
 function deferredRender(){clearTimeout(_spRenderTimer);_spRenderTimer=setTimeout(()=>{if(!document.activeElement||!document.activeElement.classList.contains('sp-input'))renderMonth();},1200);}
@@ -702,6 +703,7 @@ function showView(v){
 function showMonthSub(v){
   currentSubView=v;
   if(v==='template'){TSEL={tx:new Set(),inc:new Set(),goals:new Set()};renderTemplate();}
+  else if(v==='scratch'){renderScratch();}
   else renderMonth();
 }
 // ── Template helpers ──────────────────────────────────────────────────────────
@@ -719,13 +721,13 @@ function renderTemplate(){
   // Build rows
   const txRows=T.tx.map(t=>`<tr style="${TSEL.tx.has(t.id)?'background:#eff6ff':''}">
     <td style="width:22px"><input type="checkbox" onchange="toggleTsel('tx','${t.id}')" ${TSEL.tx.has(t.id)?'checked':''} style="width:14px;height:14px"></td>
-    <td style="cursor:pointer;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0" onclick="openEditTmplTx('${t.id}')">${t.desc||'—'}</td>
+    <td style="cursor:pointer;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0" onclick="openEditTmplTx('${t.id}')">${t.date?`<span style="color:var(--muted);font-size:11px;margin-right:4px">Day ${t.date}</span>`:''}${t.desc||'—'}</td>
     <td style="width:110px"><span class="cat-pill">${t.cat||'—'}</span></td>
     <td style="width:90px;text-align:right;font-weight:600">${fmt(t.amt||0)}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px">No template transactions</td></tr>';
   const incRows=T.inc.map(i=>`<tr style="${TSEL.inc.has(i.id)?'background:#eff6ff':''}">
     <td style="width:22px"><input type="checkbox" onchange="toggleTsel('inc','${i.id}')" ${TSEL.inc.has(i.id)?'checked':''} style="width:14px;height:14px"></td>
-    <td style="cursor:pointer;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0" onclick="openEditTmplInc('${i.id}')">${i.desc||'—'}</td>
+    <td style="cursor:pointer;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0" onclick="openEditTmplInc('${i.id}')">${i.date?`<span style="color:var(--muted);font-size:11px;margin-right:4px">Day ${i.date}</span>`:''}${i.desc||'—'}</td>
     <td style="width:110px"><span class="cat-pill">${i.cat||'—'}</span></td>
     <td style="width:90px;text-align:right;font-weight:600;color:var(--green)">${fmt(i.amt||0)}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px">No template income</td></tr>';
@@ -870,7 +872,7 @@ function openCopyTselToMonth(){
   const monthOpts=MONTHS.map(m=>`<option${m===currentMonth?' selected':''}>${m}</option>`).join('');
   openModal(`<h2>Copy to Month</h2>
     <div class="form-group"><label>Target month</label><select id="tsel-target">${monthOpts}</select></div>
-    <p style="font-size:12px;color:var(--muted)">Selected template entries will be appended to the target month with today's date.</p>
+    <p style="font-size:12px;color:var(--muted)">Selected template entries will be appended to the target month using their template day (blank if not set).</p>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="execCopyTselToMonth()">Copy</button></div>`);
 }
 function execCopyTselToMonth(){
@@ -878,9 +880,8 @@ function execCopyTselToMonth(){
   if(!STATE.months[tgt])STATE.months[tgt]={tx:[],inc:[],budgets:{},savingGoals:[],savingsUsed:[]};
   const md=STATE.months[tgt];
   const T=STATE.template;
-  const today=new Date();const dd=String(today.getDate()).padStart(2,'0');
-  if(TSEL.tx.size)T.tx.filter(t=>TSEL.tx.has(t.id)).forEach(t=>md.tx.push({id:uid(),desc:t.desc,cat:t.cat,amt:t.amt,pay:'',date:dd}));
-  if(TSEL.inc.size)T.inc.filter(i=>TSEL.inc.has(i.id)).forEach(i=>md.inc.push({id:uid(),desc:i.desc,cat:i.cat,amt:i.amt,date:dd}));
+  if(TSEL.tx.size)T.tx.filter(t=>TSEL.tx.has(t.id)).forEach(t=>md.tx.push({id:uid(),desc:t.desc,cat:t.cat,amt:t.amt,pay:t.pay||'',date:t.date||''}));
+  if(TSEL.inc.size)T.inc.filter(i=>TSEL.inc.has(i.id)).forEach(i=>md.inc.push({id:uid(),desc:i.desc,cat:i.cat,amt:i.amt,date:i.date||''}));
   if(TSEL.goals.size){
     T.savingGoals.filter(g=>TSEL.goals.has(g.id)).forEach(g=>{
       md.savingGoals.push({id:uid(),name:g.name,fund:g.fund,amount:g.amount});
@@ -904,6 +905,7 @@ function tmplTxForm(t){
   const cats=catsSortedByUse();
   const catOpts=cats.map(c=>`<option${t&&t.cat===c?' selected':''}>${c}</option>`).join('');
   return`
+    <div class="form-group"><label>Day (optional)</label><input id="tt-date" type="text" value="${t&&t.date?t.date:''}" placeholder="e.g. 15 — carries over when copied to a month"></div>
     <div class="form-group"><label>Description</label><input id="tt-desc" type="text" value="${t?t.desc:''}"></div>
     <div class="form-group"><label>Category</label>
       <select id="tt-cat">${catOpts}</select>
@@ -914,14 +916,15 @@ function tmplTxForm(t){
 function openAddTmplTx(){openModal(`<h2>Add Template Transaction</h2>${tmplTxForm(null)}<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTmplTx(null)">Add</button></div>`);}
 function openEditTmplTx(id){const t=STATE.template.tx.find(x=>x.id===id);if(!t)return;openModal(`<h2>Edit Template Transaction</h2>${tmplTxForm(t)}<div class="modal-actions" style="justify-content:space-between"><button class="btn btn-ghost" style="color:var(--red)" onclick="deleteTmplTx('${id}')">Delete</button><div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTmplTx('${id}')">Save</button></div></div>`);}
 function saveTmplTx(id){
+  const date=document.getElementById('tt-date').value.trim();
   const desc=document.getElementById('tt-desc').value.trim();
   const newcat=document.getElementById('tt-newcat').value.trim();
   const cat=newcat||(document.getElementById('tt-cat').value||'');
   const amt=parseFloat(document.getElementById('tt-amt').value)||0;
   if(!desc)return;
   if(newcat&&!STATE.customCategories.includes(newcat))STATE.customCategories.push(newcat);
-  if(id){const t=STATE.template.tx.find(x=>x.id===id);if(t){t.desc=desc;t.cat=cat;t.amt=amt;}}
-  else STATE.template.tx.push({id:uid(),desc,cat,amt});
+  if(id){const t=STATE.template.tx.find(x=>x.id===id);if(t){t.date=date;t.desc=desc;t.cat=cat;t.amt=amt;}}
+  else STATE.template.tx.push({id:uid(),date,desc,cat,amt});
   saveState();closeModal();renderTemplate();
 }
 function deleteTmplTx(id){if(!confirm('Delete?'))return;STATE.template.tx=STATE.template.tx.filter(x=>x.id!==id);saveState();closeModal();renderTemplate();}
@@ -931,6 +934,7 @@ function tmplIncForm(i){
   const cats=incCatsSortedByUse();
   const catOpts=cats.map(c=>`<option${i&&i.cat===c?' selected':''}>${c}</option>`).join('');
   return`
+    <div class="form-group"><label>Day (optional)</label><input id="ti-date" type="text" value="${i&&i.date?i.date:''}" placeholder="e.g. 1 — carries over when copied to a month"></div>
     <div class="form-group"><label>Description</label><input id="ti-desc" type="text" value="${i?i.desc:''}"></div>
     <div class="form-group"><label>Category</label>
       <select id="ti-cat">${catOpts}</select>
@@ -941,14 +945,15 @@ function tmplIncForm(i){
 function openAddTmplInc(){openModal(`<h2>Add Template Income</h2>${tmplIncForm(null)}<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTmplInc(null)">Add</button></div>`);}
 function openEditTmplInc(id){const i=STATE.template.inc.find(x=>x.id===id);if(!i)return;openModal(`<h2>Edit Template Income</h2>${tmplIncForm(i)}<div class="modal-actions" style="justify-content:space-between"><button class="btn btn-ghost" style="color:var(--red)" onclick="deleteTmplInc('${id}')">Delete</button><div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTmplInc('${id}')">Save</button></div></div>`);}
 function saveTmplInc(id){
+  const date=document.getElementById('ti-date').value.trim();
   const desc=document.getElementById('ti-desc').value.trim();
   const newcat=document.getElementById('ti-newcat').value.trim();
   const cat=newcat||(document.getElementById('ti-cat').value||'');
   const amt=parseFloat(document.getElementById('ti-amt').value)||0;
   if(!desc)return;
   if(newcat&&!STATE.customIncCategories.includes(newcat))STATE.customIncCategories.push(newcat);
-  if(id){const i=STATE.template.inc.find(x=>x.id===id);if(i){i.desc=desc;i.cat=cat;i.amt=amt;}}
-  else STATE.template.inc.push({id:uid(),desc,cat,amt});
+  if(id){const i=STATE.template.inc.find(x=>x.id===id);if(i){i.date=date;i.desc=desc;i.cat=cat;i.amt=amt;}}
+  else STATE.template.inc.push({id:uid(),date,desc,cat,amt});
   saveState();closeModal();renderTemplate();
 }
 function deleteTmplInc(id){if(!confirm('Delete?'))return;STATE.template.inc=STATE.template.inc.filter(x=>x.id!==id);saveState();closeModal();renderTemplate();}
@@ -1000,7 +1005,7 @@ function openApplyTemplate(){
       <label ${CHKLABEL}><input type="checkbox" id="at-goals" ${hasGoals?'checked':''} ${hasGoals?'':'disabled'} style="flex-shrink:0;width:15px;height:15px"> Saving Goals (${T.savingGoals.length})</label>
       <label ${CHKLABEL}><input type="checkbox" id="at-budgets" ${hasBudgets?'checked':''} ${hasBudgets?'':'disabled'} style="flex-shrink:0;width:15px;height:15px"> Budgets (${Object.keys(T.budgets).length} categories)</label>
     </div>
-    <p style="font-size:12px;color:var(--muted);margin:0">Transactions &amp; income will be appended with today's date. Existing budgets for matched categories will be overwritten.</p>
+    <p style="font-size:12px;color:var(--muted);margin:0">Transactions &amp; income will be appended using their template day (blank if not set). Existing budgets for matched categories will be overwritten.</p>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="applyTemplate()">Apply</button></div>`);
 }
 function applyTemplate(){
@@ -1012,9 +1017,8 @@ function applyTemplate(){
   const T=STATE.template;
   if(!STATE.months[month])STATE.months[month]={tx:[],inc:[],budgets:{},savingGoals:[],savingsUsed:[]};
   const md=STATE.months[month];
-  const today=new Date();const dd=String(today.getDate()).padStart(2,'0');
-  if(copyTx)T.tx.forEach(t=>md.tx.push({...t,id:uid(),date:dd}));
-  if(copyInc)T.inc.forEach(i=>md.inc.push({...i,id:uid(),date:dd}));
+  if(copyTx)T.tx.forEach(t=>md.tx.push({...t,id:uid(),date:t.date||''}));
+  if(copyInc)T.inc.forEach(i=>md.inc.push({...i,id:uid(),date:i.date||''}));
   if(copyGoals){
     T.savingGoals.forEach(g=>{
       md.savingGoals.push({...g,id:uid()});
@@ -1028,6 +1032,168 @@ function applyTemplate(){
 }
 
 // ── End Template ──────────────────────────────────────────────────────────────
+
+// ── Scratch / Draft Pads ─────────────────────────────────────────────────────
+function openDraftSelector(){
+  const items=STATE.scratches.map(s=>`
+    <div onclick="openScratch('${s.id}')" style="padding:9px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;transition:.15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <span style="font-weight:500">${escHtml(s.name)}</span>
+      <span style="font-size:12px;color:var(--muted)">${s.tx.length} tx · ${s.inc.length} inc</span>
+    </div>`).join('');
+  openModal(`<h2>Drafts</h2>
+    ${items||'<p style="color:var(--muted);margin-bottom:12px;font-size:13px">No drafts yet — create one below.</p>'}
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px">
+      <div class="form-group"><label>New Draft Name</label><input id="sc-name" type="text" placeholder="e.g. August Plan"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+        <button class="btn btn-primary" onclick="createScratch()">+ Create Draft</button>
+      </div>
+    </div>`);
+}
+function openScratch(id){currentScratchId=id;closeModal();showMonthSub('scratch');}
+function createScratch(){
+  const name=(document.getElementById('sc-name').value||'').trim()||'Draft';
+  const s={id:uid(),name,tx:[],inc:[]};
+  STATE.scratches.push(s);currentScratchId=s.id;
+  saveState();closeModal();showMonthSub('scratch');
+}
+function renderScratch(){
+  const sc=STATE.scratches.find(s=>s.id===currentScratchId);
+  if(!sc){currentScratchId=null;showMonthSub('month');return;}
+  const el=document.getElementById('view-month');
+  const totalTx=sc.tx.reduce((s,t)=>s+(t.amt||0),0);
+  const totalInc=sc.inc.reduce((s,i)=>s+(i.amt||0),0);
+  const txRows=sc.tx.map(t=>`<tr>
+    <td style="cursor:pointer;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0" onclick="openEditScratchTx('${t.id}')">${t.date?`<span style="color:var(--muted);font-size:11px;margin-right:4px">Day ${escHtml(t.date)}</span>`:''}${escHtml(t.desc)||'—'}</td>
+    <td style="width:110px"><span class="cat-pill">${escHtml(t.cat||'—')}</span></td>
+    <td style="width:80px;text-align:right;font-weight:600">${fmt(t.amt||0)}</td>
+    <td style="width:28px"><button class="icon-btn del" onclick="deleteScratchTx('${t.id}')">&#x1F5D1;</button></td>
+  </tr>`).join('')||'<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px">No transactions — click + Add</td></tr>';
+  const incRows=sc.inc.map(i=>`<tr>
+    <td style="cursor:pointer;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0" onclick="openEditScratchInc('${i.id}')">${i.date?`<span style="color:var(--muted);font-size:11px;margin-right:4px">Day ${escHtml(i.date)}</span>`:''}${escHtml(i.desc)||'—'}</td>
+    <td style="width:110px"><span class="cat-pill">${escHtml(i.cat||'—')}</span></td>
+    <td style="width:80px;text-align:right;font-weight:600;color:var(--green)">${fmt(i.amt||0)}</td>
+    <td style="width:28px"><button class="icon-btn del" onclick="deleteScratchInc('${i.id}')">&#x1F5D1;</button></td>
+  </tr>`).join('')||'<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:8px">No income — click + Add</td></tr>';
+  el.innerHTML=`
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+  <button class="btn btn-ghost btn-sm" onclick="openDraftSelector()" style="white-space:nowrap">&#x2190; Drafts</button>
+  <h2 style="margin:0;font-size:1.1rem;font-weight:700">${escHtml(sc.name)}</h2>
+  <button class="btn btn-ghost btn-sm" onclick="renameScratch('${sc.id}')" style="font-size:11px;color:var(--muted)">Rename</button>
+  <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-ghost btn-sm" onclick="copyScratchToTemplate('${sc.id}')" style="white-space:nowrap">&#x1F4CB; → Template</button>
+    <button class="btn btn-primary btn-sm" onclick="openCopyScratchToMonth('${sc.id}')" style="white-space:nowrap">&#x25B6; Copy to Month…</button>
+    <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteScratch('${sc.id}')">&#x1F5D1;</button>
+  </div>
+</div>
+<div class="month-cols">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Transactions</span><span style="font-weight:700">${fmt(totalTx)}</span><button class="btn btn-primary btn-sm" onclick="openAddScratchTx()">+ Add</button></div>
+      <table style="table-layout:fixed;width:100%"><thead><tr><th>Description</th><th style="width:110px">Category</th><th style="width:80px;text-align:right">Amount</th><th style="width:28px"></th></tr></thead><tbody>${txRows}</tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Income</span><span style="font-weight:700;color:var(--green)">${fmt(totalInc)}</span><button class="btn btn-primary btn-sm" onclick="openAddScratchInc()">+ Add</button></div>
+      <table style="table-layout:fixed;width:100%"><thead><tr><th>Description</th><th style="width:110px">Category</th><th style="width:80px;text-align:right">Amount</th><th style="width:28px"></th></tr></thead><tbody>${incRows}</tbody></table>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card" style="background:var(--blue-light);border-color:#bfdbfe">
+      <div class="card-title" style="margin-bottom:10px">About Drafts</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0">Drafts are scratch pads for planning. Set a <b>Day</b> on each item and it will carry over when you copy to a month.<br><br>
+      Use <b>Copy to Month…</b> to push transactions and income into any month.<br><br>
+      Use <b>→ Template</b> to push items into the recurring template (day is not copied to template).</p>
+    </div>
+  </div>
+</div>`;
+}
+function scratchTxForm(t){
+  const cats=catsSortedByUse();
+  const catOpts=cats.map(c=>`<option${t&&t.cat===c?' selected':''}>${c}</option>`).join('');
+  return`
+    <div class="form-group"><label>Day (optional)</label><input id="st-date" type="text" value="${t&&t.date?escHtml(t.date):''}" placeholder="e.g. 15"></div>
+    <div class="form-group"><label>Description</label><input id="st-desc" type="text" value="${t?escHtml(t.desc):''}"></div>
+    <div class="form-group"><label>Category</label><select id="st-cat">${catOpts}</select></div>
+    <div class="form-group"><label>Payment</label><select id="st-pay">${PAY_TYPES.map(p=>`<option${t&&p===t.pay?' selected':''}>${p}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Amount</label><input id="st-amt" type="text" inputmode="decimal" data-math="1" value="${t&&t.amt?t.amt:''}"></div>`;
+}
+function scratchIncForm(i){
+  const cats=incCatsSortedByUse();
+  const catOpts=cats.map(c=>`<option${i&&c===i.cat?' selected':''}>${c}</option>`).join('');
+  return`
+    <div class="form-group"><label>Day (optional)</label><input id="si-date" type="text" value="${i&&i.date?escHtml(i.date):''}" placeholder="e.g. 1"></div>
+    <div class="form-group"><label>Description</label><input id="si-desc" type="text" value="${i?escHtml(i.desc):''}"></div>
+    <div class="form-group"><label>Category</label><select id="si-cat">${catOpts}</select></div>
+    <div class="form-group"><label>Amount</label><input id="si-amt" type="text" inputmode="decimal" data-math="1" value="${i&&i.amt?i.amt:''}"></div>`;
+}
+function openAddScratchTx(){openModal(`<h2>Add Transaction</h2>${scratchTxForm(null)}<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveScratchTx(null)">Add</button></div>`);}
+function openEditScratchTx(id){const sc=STATE.scratches.find(s=>s.id===currentScratchId);if(!sc)return;const t=sc.tx.find(x=>x.id===id);if(!t)return;openModal(`<h2>Edit Transaction</h2>${scratchTxForm(t)}<div class="modal-actions" style="justify-content:space-between"><button class="btn btn-ghost" style="color:var(--red)" onclick="deleteScratchTx('${id}')">Delete</button><div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveScratchTx('${id}')">Save</button></div></div>`);}
+function saveScratchTx(id){
+  const sc=STATE.scratches.find(s=>s.id===currentScratchId);if(!sc)return;
+  const date=document.getElementById('st-date').value.trim();
+  const desc=document.getElementById('st-desc').value.trim();if(!desc)return;
+  const cat=document.getElementById('st-cat').value;
+  const pay=document.getElementById('st-pay').value;
+  const amt=parseFloat(document.getElementById('st-amt').value)||0;
+  if(id){const t=sc.tx.find(x=>x.id===id);if(t)Object.assign(t,{date,desc,cat,pay,amt});}
+  else sc.tx.push({id:uid(),date,desc,cat,pay,amt});
+  saveState();closeModal();renderScratch();
+}
+function deleteScratchTx(id){const sc=STATE.scratches.find(s=>s.id===currentScratchId);if(!sc||!confirm('Delete?'))return;sc.tx=sc.tx.filter(x=>x.id!==id);saveState();closeModal();renderScratch();}
+function openAddScratchInc(){openModal(`<h2>Add Income</h2>${scratchIncForm(null)}<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveScratchInc(null)">Add</button></div>`);}
+function openEditScratchInc(id){const sc=STATE.scratches.find(s=>s.id===currentScratchId);if(!sc)return;const i=sc.inc.find(x=>x.id===id);if(!i)return;openModal(`<h2>Edit Income</h2>${scratchIncForm(i)}<div class="modal-actions" style="justify-content:space-between"><button class="btn btn-ghost" style="color:var(--red)" onclick="deleteScratchInc('${id}')">Delete</button><div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveScratchInc('${id}')">Save</button></div></div>`);}
+function saveScratchInc(id){
+  const sc=STATE.scratches.find(s=>s.id===currentScratchId);if(!sc)return;
+  const date=document.getElementById('si-date').value.trim();
+  const desc=document.getElementById('si-desc').value.trim();if(!desc)return;
+  const cat=document.getElementById('si-cat').value;
+  const amt=parseFloat(document.getElementById('si-amt').value)||0;
+  if(id){const i=sc.inc.find(x=>x.id===id);if(i)Object.assign(i,{date,desc,cat,amt});}
+  else sc.inc.push({id:uid(),date,desc,cat,amt});
+  saveState();closeModal();renderScratch();
+}
+function deleteScratchInc(id){const sc=STATE.scratches.find(s=>s.id===currentScratchId);if(!sc||!confirm('Delete?'))return;sc.inc=sc.inc.filter(x=>x.id!==id);saveState();closeModal();renderScratch();}
+function renameScratch(id){
+  const sc=STATE.scratches.find(s=>s.id===id);if(!sc)return;
+  openModal(`<h2>Rename Draft</h2><div class="form-group"><label>Name</label><input id="sc-rename" type="text" value="${escHtml(sc.name)}"></div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="execRenameScratch('${id}')">Save</button></div>`);
+}
+function execRenameScratch(id){
+  const sc=STATE.scratches.find(s=>s.id===id);if(!sc)return;
+  const name=(document.getElementById('sc-rename').value||'').trim();if(!name)return;
+  sc.name=name;saveState();closeModal();renderScratch();
+}
+function deleteScratch(id){
+  if(!confirm('Delete this draft?'))return;
+  STATE.scratches=STATE.scratches.filter(s=>s.id!==id);
+  currentScratchId=null;saveState();showMonthSub('month');
+}
+function openCopyScratchToMonth(id){
+  const monthOpts=MONTHS.map(m=>`<option${m===currentMonth?' selected':''}>${m}</option>`).join('');
+  openModal(`<h2>Copy Draft to Month</h2>
+    <div class="form-group"><label>Target Month</label><select id="sc-tgt">${monthOpts}</select></div>
+    <p style="font-size:12px;color:var(--muted)">Transactions and income will be appended using the days set in this draft.</p>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="execCopyScratchToMonth('${id}')">Copy</button></div>`);
+}
+function execCopyScratchToMonth(id){
+  const sc=STATE.scratches.find(s=>s.id===id);if(!sc)return;
+  const tgt=document.getElementById('sc-tgt').value;
+  if(!STATE.months[tgt])STATE.months[tgt]={tx:[],inc:[],budgets:{},savingGoals:[],savingsUsed:[]};
+  const md=STATE.months[tgt];
+  sc.tx.forEach(t=>md.tx.push({id:uid(),date:t.date||'',desc:t.desc,cat:t.cat,pay:t.pay||'',amt:t.amt}));
+  sc.inc.forEach(i=>md.inc.push({id:uid(),date:i.date||'',desc:i.desc,cat:i.cat,amt:i.amt}));
+  saveState();closeModal();switchMonth(tgt);showView('month');
+}
+function copyScratchToTemplate(id){
+  const sc=STATE.scratches.find(s=>s.id===id);if(!sc)return;
+  const n=sc.tx.length+sc.inc.length;
+  if(!n){alert('This draft has no items to copy.');return;}
+  if(!confirm(`Copy ${n} item${n>1?'s':''} from "${sc.name}" to Template?`))return;
+  const T=STATE.template;
+  sc.tx.forEach(t=>T.tx.push({id:uid(),desc:t.desc,cat:t.cat,amt:t.amt}));
+  sc.inc.forEach(i=>T.inc.push({id:uid(),desc:i.desc,cat:i.cat,amt:i.amt}));
+  saveState();showMonthSub('template');
+}
+// ── End Scratch ───────────────────────────────────────────────────────────────
 let _ch={};
 function toggleOtherRows(td){
   const rows=document.querySelectorAll('.other-sub-row');
@@ -1144,6 +1310,7 @@ function renderDashboard(){
 }
 function renderMonth(){
   if(currentSubView==='template'){renderTemplate();return;}
+  if(currentSubView==='scratch'){renderScratch();return;}
   const el=document.getElementById('view-month');
   const _scroll=window.scrollY;
   const md=STATE.months[currentMonth];if(!md)return;
@@ -1169,6 +1336,7 @@ function renderMonth(){
   <div class="month-tabs">${MONTHS.map(m=>`<button class="month-tab${m===currentMonth?' active':''}" onclick="switchMonth('${m}')">${m.slice(0,3)}</button>`).join('')}</div>
   <div style="display:flex;gap:8px;flex-shrink:0">
     <button class="btn btn-ghost btn-sm" onclick="showMonthSub('template')" style="white-space:nowrap">&#x1F4CB; Template</button>
+    <button class="btn btn-ghost btn-sm" onclick="openDraftSelector()" style="white-space:nowrap">&#x270F;&#xFE0F; Drafts</button>
     <button class="btn btn-ghost btn-sm" onclick="openCopyMonth()" style="white-space:nowrap">&#x2398; Copy month…</button>
   </div>
 </div>
