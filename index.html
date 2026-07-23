@@ -724,8 +724,9 @@ function renderTemplate(){
     <td style="width:44px"><input type="text" value="${escHtml(t.date||'')}" placeholder="—" onblur="saveTmplTxDate('${t.id}',this.value)" style="width:38px;text-align:center;border:1px solid var(--border);border-radius:3px;padding:2px 3px;font-size:12px;color:var(--text)"></td>
     <td style="cursor:pointer;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0" onclick="openEditTmplTx('${t.id}')">${t.desc||'—'}</td>
     <td style="width:110px"><span class="cat-pill">${t.cat||'—'}</span></td>
+    <td style="width:100px"><select onchange="saveTmplTxPay('${t.id}',this.value)" style="width:100%;border:1px solid var(--border);border-radius:3px;padding:2px 4px;font-size:12px;background:transparent;color:var(--text)">${PAY_TYPES.map(p=>`<option${t.pay===p?' selected':''}>${p}</option>`).join('')}</select></td>
     <td style="width:90px;text-align:right;font-weight:600">${fmt(t.amt||0)}</td>
-  </tr>`).join('')||'<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:8px">No template transactions</td></tr>';
+  </tr>`).join('')||'<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:8px">No template transactions</td></tr>';
   const incRows=T.inc.map(i=>`<tr style="${TSEL.inc.has(i.id)?'background:#eff6ff':''}">
     <td style="width:22px"><input type="checkbox" onchange="toggleTsel('inc','${i.id}')" ${TSEL.inc.has(i.id)?'checked':''} style="width:14px;height:14px"></td>
     <td style="width:44px"><input type="text" value="${escHtml(i.date||'')}" placeholder="—" onblur="saveTmplIncDate('${i.id}',this.value)" style="width:38px;text-align:center;border:1px solid var(--border);border-radius:3px;padding:2px 3px;font-size:12px;color:var(--text)"></td>
@@ -783,7 +784,7 @@ function renderTemplate(){
     <div class="card">
       <div class="card-header"><span class="card-title">Transactions</span><button class="btn btn-primary btn-sm" onclick="openAddTmplTx()">+ Add</button></div>
       <table style="table-layout:fixed;width:100%">
-        <thead><tr><th style="width:22px"></th><th style="width:44px;text-align:center">Day</th><th>Description</th><th style="width:110px">Category</th><th style="width:90px;text-align:right">Amount</th></tr></thead>
+        <thead><tr><th style="width:22px"></th><th style="width:44px;text-align:center">Day</th><th>Description</th><th style="width:110px">Category</th><th style="width:100px">Payment</th><th style="width:90px;text-align:right">Amount</th></tr></thead>
         <tbody>${txRows}</tbody>
       </table>
     </div>
@@ -913,6 +914,7 @@ function tmplTxForm(t){
       <select id="tt-cat">${catOpts}</select>
       <input id="tt-newcat" type="text" placeholder="Or type new category…" style="margin-top:6px">
     </div>
+    <div class="form-group"><label>Payment</label><select id="tt-pay">${PAY_TYPES.map(p=>`<option${t&&p===t.pay?' selected':''}>${p}</option>`).join('')}</select></div>
     <div class="form-group"><label>Amount</label><input id="tt-amt" type="text" inputmode="decimal" data-math="1" value="${t?t.amt:''}"></div>`;
 }
 function openAddTmplTx(){openModal(`<h2>Add Template Transaction</h2>${tmplTxForm(null)}<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTmplTx(null)">Add</button></div>`);}
@@ -922,11 +924,12 @@ function saveTmplTx(id){
   const desc=document.getElementById('tt-desc').value.trim();
   const newcat=document.getElementById('tt-newcat').value.trim();
   const cat=newcat||(document.getElementById('tt-cat').value||'');
+  const pay=document.getElementById('tt-pay').value;
   const amt=parseFloat(document.getElementById('tt-amt').value)||0;
   if(!desc)return;
   if(newcat&&!STATE.customCategories.includes(newcat))STATE.customCategories.push(newcat);
-  if(id){const t=STATE.template.tx.find(x=>x.id===id);if(t){t.date=date;t.desc=desc;t.cat=cat;t.amt=amt;}}
-  else STATE.template.tx.push({id:uid(),date,desc,cat,amt});
+  if(id){const t=STATE.template.tx.find(x=>x.id===id);if(t){t.date=date;t.desc=desc;t.cat=cat;t.pay=pay;t.amt=amt;}}
+  else STATE.template.tx.push({id:uid(),date,desc,cat,pay,amt});
   saveState();closeModal();renderTemplate();
 }
 function deleteTmplTx(id){if(!confirm('Delete?'))return;STATE.template.tx=STATE.template.tx.filter(x=>x.id!==id);saveState();closeModal();renderTemplate();}
@@ -981,9 +984,10 @@ function saveTmplGoal(id){
 }
 function deleteTmplGoal(id){if(!confirm('Delete?'))return;STATE.template.savingGoals=STATE.template.savingGoals.filter(x=>x.id!==id);saveState();closeModal();renderTemplate();}
 
-// Template day inline save
+// Template day/payment inline save
 function saveTmplTxDate(id,val){const t=STATE.template.tx.find(x=>x.id===id);if(t){t.date=val.trim();saveState();}}
 function saveTmplIncDate(id,val){const i=STATE.template.inc.find(x=>x.id===id);if(i){i.date=val.trim();saveState();}}
+function saveTmplTxPay(id,val){const t=STATE.template.tx.find(x=>x.id===id);if(t){t.pay=val;saveState();}}
 // Template budget inline save
 function saveTmplBudget(cat,val){
   const v=parseFloat(evalMath(val))||0;
