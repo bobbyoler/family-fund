@@ -1631,7 +1631,7 @@ function renderAssets(){
     <div class="card-header"><span class="card-title">Assets</span><button class="btn btn-sm btn-ghost" onclick="openAddAsset()">+ Add</button></div>
     <table><thead><tr><th>Account</th><th style="text-align:right">Balance</th><th></th></tr></thead>
     <tbody>${Object.entries(STATE.assets).map(([k,v])=>{const le=fmtLastEdited(STATE.assetMeta?.assets?.[k]);return`<tr><td style="font-weight:500">${k}${le?`<div style="font-size:11px;color:var(--muted);font-weight:400">${le}</div>`:''}</td><td style="text-align:right;font-weight:600;color:var(--green)"><span class="editable" onclick="editAsset('${k}')">${fmt(v)}</span></td><td><button class="icon-btn del" onclick="deleteAsset('${k}')">&#x1F5D1;</button></td></tr>`;}).join('')}
-    ${gcT>0?`<tr><td style="font-weight:500;color:var(--muted)">Gift Cards<div style="font-size:11px;font-weight:400">${STATE.giftCards.length} card${STATE.giftCards.length!==1?'s':''}</div></td><td style="text-align:right;font-weight:600;color:var(--amber)">${fmt(gcT)}</td><td></td></tr>`:''}
+    <tr><td style="font-weight:500;color:var(--muted)">Gift Cards<div style="font-size:11px;font-weight:400">${STATE.giftCards.length} card${STATE.giftCards.length!==1?'s':''}</div></td><td style="text-align:right;font-weight:600;color:var(--amber)">${fmt(gcT)}</td><td></td></tr>
     <tr class="tr-total"><td>Total</td><td style="text-align:right;color:var(--green)">${fmt(totalA+gcT)}</td><td></td></tr></tbody></table>
   </div>
   <div class="card">
